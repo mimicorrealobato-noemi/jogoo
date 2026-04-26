@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory of Dreams — Jogo de Cartas</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0F0E0C;
+  --surface:#161512;
+  --surface2:#1E1C18;
+  --blue:#3B82F6;
+  --blue-dark:#1e3a5f;
+  --green:#22C55E;
+  --green-dark:#14532d;
+  --yellow:#EAB308;
+  --yellow-dark:#713f12;
+  --red:#EF4444;
+  --red-dark:#7f1d1d;
+  --cream:#F5F0E8;
+  --muted:#6B6556;
+  --border:#2A2820;
+  --card-w:176px;
+  --card-h:264px;
+}
+
+body{
+  background:var(--bg);
+  color:var(--cream);
+  font-family:'Syne',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:.6;
+}
+
+/* ── HEADER ── */
+.header{
+  padding:56px 32px 40px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.header-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:11px;letter-spacing:4px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:16px;
+}
+.header-title{
+  font-family:'Archivo Black',sans-serif;
+  font-size:clamp(52px,10vw,108px);
+  line-height:.88;letter-spacing:-2px;
+  background:linear-gradient(135deg,#fff 0%,#c8b88a 50%,#8a7040 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.header-sub{
+  font-family:'Space Mono',monospace;
+  font-size:12px;color:var(--muted);
+  letter-spacing:1px;line-height:1.8;
+  max-width:560px;margin:20px auto 0;
+  font-style:italic;
+}
+.color-dots{
+  display:flex;gap:8px;justify-content:center;margin-top:24px;
+}
+.dot{width:12px;height:12px;border-radius:50%;}
+.dot-b{background:var(--blue);}
+.dot-g{background:var(--green);}
+.dot-y{background:var(--yellow);}
+.dot-r{background:var(--red);}
+
+/* ── NAV ── */
+.nav{
+  display:flex;justify-content:center;
+  gap:2px;padding:20px 20px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;
+  background:rgba(15,14,12,.96);
+  backdrop-filter:blur(12px);
+  z-index:100;
+}
+.nav-btn{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:'Syne',sans-serif;
+  font-size:12px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:9px 22px;cursor:pointer;
+  transition:all .18s;
+}
+.nav-btn:hover{border-color:var(--cream);color:var(--cream);}
+.nav-btn.active{background:var(--cream);border-color:var(--cream);color:var(--bg);}
+
+/* ── SECTIONS ── */
+.section{display:none;max-width:1280px;margin:0 auto;padding:48px 24px 100px;}
+.section.visible{display:block;}
+
+/* ── MANUAL ── */
+.manual-hero{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:4px solid var(--yellow);
+  padding:32px;margin-bottom:32px;
+}
+.manual-hero h2{
+  font-family:'Archivo Black',sans-serif;
+  font-size:28px;letter-spacing:-1px;
+  margin-bottom:12px;
+}
+.manual-hero p{
+  font-family:'Space Mono',monospace;
+  font-size:13px;color:rgba(245,240,232,.7);
+  line-height:1.9;
+}
+
+.manual-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px;
+}
+.mcard{
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:24px;
+}
+.mcard-title{
+  font-family:'Archivo Black',sans-serif;
+  font-size:15px;letter-spacing:.5px;
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;
+}
+.mcard-title .num{
+  width:28px;height:28px;
+  background:var(--yellow);color:var(--bg);
+  font-size:14px;display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;font-weight:700;flex-shrink:0;
+}
+.mcard p,.mcard li{
+  font-family:'Space Mono',monospace;
+  font-size:12px;line-height:1.9;
+  color:rgba(245,240,232,.65);
+}
+.mcard ul{padding-left:16px;}
+.mcard li{margin-bottom:4px;}
+.mcard strong{color:var(--cream);}
+
+.pts-table{width:100%;border-collapse:collapse;margin-top:12px;}
+.pts-table th{
+  background:var(--surface2);
+  font-family:'Space Mono',monospace;
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  padding:8px 12px;text-align:left;color:var(--muted);
+}
+.pts-table td{
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  font-family:'Space Mono',monospace;font-size:12px;
+  color:rgba(245,240,232,.7);
+}
+.pts-table .pts{color:var(--yellow);font-weight:700;text-align:right;}
+
+.turn-box{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:20px;margin-top:12px;
+}
+.turn-step{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.turn-step:last-child{border-bottom:none;}
+.turn-num{
+  width:24px;height:24px;
+  background:var(--cream);color:var(--bg);
+  font-family:'Archivo Black',sans-serif;
+  font-size:12px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:2px;
+}
+.turn-content strong{
+  font-size:13px;display:block;margin-bottom:4px;
+}
+.turn-content p{
+  font-family:'Space Mono',monospace;
+  font-size:11px;color:var(--muted);line-height:1.7;
+}
+
+/* ── COLOR LEGEND ── */
+.legend-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px;}
+.legend-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;background:var(--surface2);border:1px solid var(--border);
+}
+.legend-swatch{width:16px;height:32px;flex-shrink:0;}
+.legend-item.b .legend-swatch{background:var(--blue);}
+.legend-item.g .legend-swatch{background:var(--green);}
+.legend-item.y .legend-swatch{background:var(--yellow);}
+.legend-item.r .legend-swatch{background:var(--red);}
+.legend-text strong{font-size:13px;display:block;margin-bottom:2px;}
+.legend-text span{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);}
+
+/* ── CARDS SECTION ── */
+.filter-row{
+  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px;
+  align-items:center;
+}
+.filter-count{
+  font-family:'Space Mono',monospace;
+  font-size:11px;color:var(--muted);
+  margin-left:auto;
+}
+.fbtn{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:'Syne',sans-serif;
+  font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:7px 18px;cursor:pointer;
+  transition:all .15s;
+}
+.fbtn:hover{color:var(--cream);border-color:var(--cream);}
+.fbtn.active{color:var(--bg);font-weight:700;}
+.fbtn.all.active{background:var(--cream);border-color:var(--cream);}
+.fbtn.azul.active{background:var(--blue);border-color:var(--blue);}
+.fbtn.verde.active{background:var(--green);border-color:var(--green);}
+.fbtn.amarelo.active{background:var(--yellow);border-color:var(--yellow);}
+.fbtn.vermelho.active{background:var(--red);border-color:var(--red);}
+.fbtn.sabotagem.active{background:#7c2d12;border-color:#7c2d12;color:var(--cream);}
+.fbtn.bonus.active{background:#4c1d95;border-color:#4c1d95;color:var(--cream);}
+.fbtn.coringa.active{background:#1e3a5f;border-color:#1e3a5f;color:var(--cream);}
+
+.cards-grid{
+  display:flex;flex-wrap:wrap;gap:14px;
+}
+
+/* ── CARD ── */
+.gcard{
+  width:var(--card-w);
+  height:var(--card-h);
+  position:relative;
+  cursor:pointer;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
+  flex-shrink:0;
+}
+.gcard:hover{
+  transform:translateY(-10px) rotate(-1.5deg) scale(1.03);
+  box-shadow:0 28px 60px rgba(0,0,0,.7);
+  z-index:20;
+}
+.card-face{
+  width:100%;height:100%;
+  border-radius:6px;overflow:hidden;
+  display:flex;flex-direction:column;
+  position:relative;border:2px solid;
+}
+
+/* Color themes */
+.gcard.azul .card-face{background:linear-gradient(170deg,#0c1829 0%,#060e1a 100%);border-color:#1d4ed8;}
+.gcard.verde .card-face{background:linear-gradient(170deg,#052e16 0%,#020f07 100%);border-color:#15803d;}
+.gcard.amarelo .card-face{background:linear-gradient(170deg,#1c1400 0%,#0f0a00 100%);border-color:#a16207;}
+.gcard.vermelho .card-face{background:linear-gradient(170deg,#1f0606 0%,#0f0202 100%);border-color:#b91c1c;}
+
+/* sub-types */
+.gcard.sabotagem.azul .card-face{border-color:#ef4444;border-width:2px;border-style:dashed;}
+.gcard.sabotagem.verde .card-face{border-color:#ef4444;border-style:dashed;}
+.gcard.sabotagem.amarelo .card-face{border-color:#ef4444;border-style:dashed;}
+.gcard.sabotagem.vermelho .card-face{border-color:#ef4444;border-style:dashed;}
+.gcard.bonus .card-face{border-style:double;border-width:4px;}
+.gcard.coringa .card-face{border-style:solid;border-width:2px;border-color:#a855f7;}
+
+.card-top{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:8px 10px 0;
+}
+.card-color-tag{
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  opacity:.7;
+}
+.gcard.azul .card-color-tag{color:var(--blue);}
+.gcard.verde .card-color-tag{color:var(--green);}
+.gcard.amarelo .card-color-tag{color:var(--yellow);}
+.gcard.vermelho .card-color-tag{color:var(--red);}
+.gcard.coringa .card-color-tag{color:#a855f7;}
+
+.card-pts-badge{
+  font-family:'Archivo Black',sans-serif;
+  font-size:15px;line-height:1;
+  width:32px;height:32px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.gcard.azul .card-pts-badge{background:var(--blue);color:#fff;}
+.gcard.verde .card-pts-badge{background:var(--green);color:#fff;}
+.gcard.amarelo .card-pts-badge{background:var(--yellow);color:var(--bg);}
+.gcard.vermelho .card-pts-badge{background:var(--red);color:#fff;}
+.gcard.sabotagem .card-pts-badge{background:#ef4444 !important;color:#fff;}
+.gcard.bonus .card-pts-badge{background:#7c3aed !important;color:#fff;}
+.gcard.coringa .card-pts-badge{background:#a855f7;color:#fff;}
+
+.card-emoji{
+  font-size:36px;text-align:center;
+  padding:6px 0 4px;line-height:1;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
+}
+
+.card-divider{height:1px;margin:0 10px;opacity:.25;}
+.gcard.azul .card-divider{background:var(--blue);}
+.gcard.verde .card-divider{background:var(--green);}
+.gcard.amarelo .card-divider{background:var(--yellow);}
+.gcard.vermelho .card-divider{background:var(--red);}
+.gcard.coringa .card-divider{background:#a855f7;}
+
+.card-name{
+  font-family:'Archivo Black',sans-serif;
+  font-size:11.5px;line-height:1.2;
+  text-align:center;
+  padding:7px 10px 3px;
+  color:var(--cream);letter-spacing:.3px;
+}
+.card-subtype{
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  text-align:center;padding:0 10px 5px;
+}
+.gcard.azul .card-subtype{color:var(--blue);opacity:.8;}
+.gcard.verde .card-subtype{color:var(--green);opacity:.8;}
+.gcard.amarelo .card-subtype{color:var(--yellow);opacity:.8;}
+.gcard.vermelho .card-subtype{color:var(--red);opacity:.8;}
+.gcard.sabotagem .card-subtype{color:#ef4444 !important;opacity:1;}
+.gcard.bonus .card-subtype{color:#a855f7 !important;opacity:1;}
+.gcard.coringa .card-subtype{color:#a855f7;opacity:1;}
+
+.card-desc{
+  font-family:'Space Mono',monospace;
+  font-size:9px;line-height:1.6;
+  color:rgba(245,240,232,.55);
+  padding:3px 12px 8px;
+  text-align:center;flex:1;
+}
+
+.card-footer{
+  padding:6px 10px;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;justify-content:center;
+}
+.card-footer-text{
+  font-family:'Space Mono',monospace;
+  font-size:8px;letter-spacing:1px;
+  opacity:.4;text-transform:uppercase;
+}
+
+/* Corner letters */
+.card-corner-tl,.card-corner-br{
+  position:absolute;
+  font-family:'Archivo Black',sans-serif;
+  font-size:10px;opacity:.3;
+}
+.card-corner-tl{top:6px;left:8px;}
+.card-corner-br{bottom:6px;right:8px;transform:rotate(180deg);}
+.gcard.azul .card-corner-tl,.gcard.azul .card-corner-br{color:var(--blue);}
+.gcard.verde .card-corner-tl,.gcard.verde .card-corner-br{color:var(--green);}
+.gcard.amarelo .card-corner-tl,.gcard.amarelo .card-corner-br{color:var(--yellow);}
+.gcard.vermelho .card-corner-tl,.gcard.vermelho .card-corner-br{color:var(--red);}
+
+.gcard.hidden{display:none;}
+
+/* ── SCORE ── */
+.score-top{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:32px;flex-wrap:wrap;gap:12px;
+}
+.score-actions{display:flex;gap:8px;}
+.action-btn{
+  background:transparent;
+  border:1px solid var(--border);color:var(--muted);
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:9px 20px;cursor:pointer;transition:all .15s;
+}
+.action-btn:hover{border-color:var(--cream);color:var(--cream);}
+.action-btn.primary{
+  background:var(--yellow);border-color:var(--yellow);
+  color:var(--bg);
+}
+.action-btn.primary:hover{background:#ca9500;}
+
+.players-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:16px;margin-bottom:28px;
+}
+.pboard{
+  background:var(--surface);border:1px solid var(--border);
+  border-top:3px solid;padding:24px;
+}
+.pboard:nth-child(1){border-top-color:var(--blue);}
+.pboard:nth-child(2){border-top-color:var(--green);}
+.pboard:nth-child(3){border-top-color:var(--yellow);}
+.pboard:nth-child(4){border-top-color:var(--red);}
+.pboard:nth-child(5){border-top-color:#a855f7;}
+.pboard:nth-child(6){border-top-color:#f97316;}
+
+.pname-input{
+  background:transparent;border:none;
+  border-bottom:1px solid var(--border);
+  color:var(--cream);
+  font-family:'Archivo Black',sans-serif;
+  font-size:18px;width:100%;padding:4px 0;
+  outline:none;margin-bottom:20px;letter-spacing:.5px;
+}
+.pname-input::placeholder{opacity:.25;}
+
+.score-cat{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--border);
+}
+.score-cat-label{
+  font-family:'Space Mono',monospace;
+  font-size:11px;color:rgba(245,240,232,.6);
+}
+.score-cat-label .color-dot{
+  display:inline-block;width:8px;height:8px;
+  border-radius:50%;margin-right:6px;
+}
+.score-ctrl{display:flex;align-items:center;gap:6px;}
+.sbtn{
+  width:22px;height:22px;
+  background:var(--surface2);border:none;
+  color:var(--cream);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s;
+}
+.sbtn:hover{background:var(--border);}
+.sval{
+  width:28px;text-align:center;
+  font-family:'Archivo Black',sans-serif;font-size:16px;
+}
+.ptotal{
+  margin-top:16px;
+  font-family:'Archivo Black',sans-serif;
+  font-size:36px;text-align:right;letter-spacing:-1px;
+}
+.ptotal small{
+  font-family:'Space Mono',monospace;
+  font-size:11px;opacity:.4;margin-right:4px;
+  letter-spacing:2px;
+}
+
+.winner-box{
+  background:linear-gradient(135deg,#ca9500,#7c4a00);
+  padding:28px;text-align:center;
+  display:none;margin-bottom:24px;
+}
+.winner-box.show{display:block;animation:wglow 1.4s ease infinite alternate;}
+@keyframes wglow{from{box-shadow:0 0 20px rgba(212,160,32,.3);}to{box-shadow:0 0 60px rgba(212,160,32,.7);}}
+.winner-box h2{
+  font-family:'Archivo Black',sans-serif;
+  font-size:32px;letter-spacing:-1px;color:var(--bg);
+}
+.winner-box p{font-family:'Space Mono',monospace;font-size:13px;color:rgba(0,0,0,.6);margin-top:6px;}
+
+/* ── PRINT ── */
+.print-bar{
+  display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;align-items:center;
+}
+.print-bar p{
+  font-family:'Space Mono',monospace;
+  font-size:11px;color:var(--muted);
+}
+@media print{
+  body{background:#fff;color:#000;}
+  .nav,.filter-row,.print-bar,.score-actions,.action-btn{display:none!important;}
+  .section{display:block!important;}
+  .gcard{break-inside:avoid;page-break-inside:avoid;}
+  .card-face{background:#f9f9f9!important;border:2px solid #333!important;}
+  .card-name,.card-desc,.card-color-tag,.card-subtype{color:#000!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-eyebrow">2–6 jogadores · 30–60 min · baralho de 128 cartas</div>
+  <div class="header-title">FACTORY<br>OF DREAMS</div>
+  <div class="header-sub">Jogo de Cartas sobre Produção, Estratégia e Sabotagem<br><em>Porque aprender gestão lendo slide é triste. Jogando e atrapalhando colegas fica memorável.</em></div>
+  <div class="color-dots">
+    <div class="dot dot-b"></div>
+    <div class="dot dot-g"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-r"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showSection('manual',this)">📖 Manual</button>
+  <button class="nav-btn" onclick="showSection('cartas',this)">🃏 Cartas (128)</button>
+  <button class="nav-btn" onclick="showSection('pontos',this)">🏆 Placar</button>
+</nav>
+
+<!-- ══ MANUAL ══════════════════════════════════════════════════════ -->
+<section id="manual" class="section visible">
+
+  <div class="manual-hero">
+    <h2>🏭 Objetivo</h2>
+    <p>Ser o jogador com mais pontos na história da sua fábrica ao final da partida.<br>
+    Você constrói sua empresa jogando cartas na mesa: expandindo operação, escolhendo layouts, processos produtivos, acertando os 4Vs da Produção e aproveitando oportunidades de gestão.<br>
+    Mas claro, como toda vida corporativa minimamente realista, <strong>existem sabotagens.</strong></p>
+  </div>
+
+  <div class="manual-grid">
+
+    <!-- Conteúdo -->
+    <div class="mcard">
+      <div class="mcard-title">📦 Conteúdo do Jogo</div>
+      <p><strong>128 cartas no total — 4 cores (32 cada)</strong></p>
+      <div class="legend-grid" style="margin-top:14px;">
+        <div class="legend-item b"><div class="legend-swatch"></div><div class="legend-text"><strong>🟦 Azul</strong><span>4Vs da Produção</span></div></div>
+        <div class="legend-item g"><div class="legend-swatch"></div><div class="legend-text"><strong>🟩 Verde</strong><span>Tipos de Processo</span></div></div>
+        <div class="legend-item y"><div class="legend-swatch"></div><div class="legend-text"><strong>🟨 Amarelo</strong><span>Layouts</span></div></div>
+        <div class="legend-item r"><div class="legend-swatch"></div><div class="legend-text"><strong>🟥 Vermelho</strong><span>Gestão da Operação</span></div></div>
+      </div>
+      <p style="margin-top:14px;font-size:11px;color:var(--muted);">Dentro de cada cor existem cartas normais, bônus, coringa e sabotagem misturadas. Assim ninguém sabe pela parte de trás. Finalmente uma utilidade para paranoia.</p>
+    </div>
+
+    <!-- Preparação -->
+    <div class="mcard">
+      <div class="mcard-title"><div class="num">1</div>Preparação</div>
+      <div class="turn-box">
+        <div class="turn-step"><div class="turn-num">1</div><div class="turn-content"><strong>Embaralhe</strong><p>Separe por cor ou tudo misturado (recomendado: tudo misturado)</p></div></div>
+        <div class="turn-step"><div class="turn-num">2</div><div class="turn-content"><strong>Distribua</strong><p>Cada jogador recebe <strong>5 cartas</strong></p></div></div>
+        <div class="turn-step"><div class="turn-num">3</div><div class="turn-content"><strong>Monte de compra</strong><p>O restante vira monte central</p></div></div>
+        <div class="turn-step"><div class="turn-num">4</div><div class="turn-content"><strong>Primeiro jogador</strong><p>Escolha quem começa</p></div></div>
+      </div>
+    </div>
+
+    <!-- Como jogar -->
+    <div class="mcard">
+      <div class="mcard-title"><div class="num">2</div>Como Jogar (seu turno)</div>
+      <div class="turn-box">
+        <div class="turn-step"><div class="turn-num">1</div><div class="turn-content"><strong>Jogue 1 carta na mesa</strong><p>Coloque na sua fábrica · Use bônus · Use sabotagem · Use coringa</p></div></div>
+        <div class="turn-step"><div class="turn-num">2</div><div class="turn-content"><strong>Conte uma mini-história</strong><p>Explique como aquilo ajuda sua fábrica.<br><em>"Implantei layout celular para reduzir deslocamento e ganhar agilidade."</em><br>(Professor adora isso. Finja naturalidade.)</p></div></div>
+        <div class="turn-step"><div class="turn-num">3</div><div class="turn-content"><strong>Compre 1 carta</strong><p>Pegue do monte.</p></div></div>
+      </div>
+    </div>
+
+    <!-- Fim -->
+    <div class="mcard">
+      <div class="mcard-title"><div class="num">3</div>Fim do Jogo</div>
+      <ul>
+        <li>Quando o monte <strong>acabar</strong>, ou</li>
+        <li>Algum jogador tiver <strong>15 cartas</strong> na fábrica</li>
+        <li>Todos contam os pontos</li>
+        <li>Vence quem tiver <strong>mais pontos</strong></li>
+      </ul>
+    </div>
+
+    <!-- Pontos -->
+    <div class="mcard" style="grid-column:span 2;">
+      <div class="mcard-title">🎯 Sistema de Pontos</div>
+      <table class="pts-table">
+        <tr><th>Tipo de Carta</th><th style="text-align:right">Pontos</th></tr>
+        <tr><td>Carta comum</td><td class="pts">+3</td></tr>
+        <tr><td>Carta forte</td><td class="pts">+5</td></tr>
+        <tr><td>Carta rara</td><td class="pts">+7</td></tr>
+        <tr><td>Bônus especial</td><td class="pts">+10</td></tr>
+        <tr><td>Sabotagem aplicada ao adversário</td><td class="pts" style="color:#ef4444">−5 (ao alvo)</td></tr>
+        <tr><td>Coringa usado</td><td class="pts">Valor da carta copiada</td></tr>
+      </table>
+    </div>
+
+    <!-- Regras importantes -->
+    <div class="mcard">
+      <div class="mcard-title">⚠️ Regras Importantes</div>
+      <ul>
+        <li><strong>Cartas jogadas ficam na mesa</strong> — permanentes (exceto sabotagens específicas)</li>
+        <li><strong>Limite:</strong> máximo de 1 sabotagem por turno</li>
+        <li><strong>Defesa:</strong> se o alvo tiver coringa na mão, cancela a sabotagem</li>
+      </ul>
+    </div>
+
+    <!-- Coringas -->
+    <div class="mcard">
+      <div class="mcard-title">🃏 Coringas — Como Funcionam</div>
+      <p style="margin-bottom:10px;">Quando jogar um coringa, escolha:</p>
+      <ul>
+        <li>Copiar qualquer carta da mesa</li>
+        <li>Cancelar uma sabotagem</li>
+        <li>Dobrar o valor de uma carta sua</li>
+      </ul>
+    </div>
+
+    <!-- Sabotagens -->
+    <div class="mcard">
+      <div class="mcard-title">💣 Sabotagens — Como Funcionam</div>
+      <p style="margin-bottom:10px;">Escolha um adversário e aplique o efeito:</p>
+      <ul>
+        <li>Perde <strong>5 pontos</strong></li>
+        <li>Remove 1 carta comum da fábrica</li>
+        <li>Bloqueia próximo turno (sabotagens raras)</li>
+      </ul>
+    </div>
+
+    <!-- Conceitos -->
+    <div class="mcard" style="grid-column:1/-1;">
+      <div class="mcard-title">📚 Diferencial Acadêmico</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:8px;">
+        <div>
+          <p style="color:var(--blue);font-weight:700;margin-bottom:6px;font-size:13px;">🟦 4Vs da Produção</p>
+          <ul><li>Volume</li><li>Variedade</li><li>Variação da Demanda</li><li>Visibilidade</li></ul>
+        </div>
+        <div>
+          <p style="color:var(--green);font-weight:700;margin-bottom:6px;font-size:13px;">🟩 Tipos de Processo</p>
+          <ul><li>Projeto</li><li>Jobbing</li><li>Lotes</li><li>Massa</li><li>Contínuo</li><li>Serviços</li></ul>
+        </div>
+        <div>
+          <p style="color:var(--yellow);font-weight:700;margin-bottom:6px;font-size:13px;">🟨 Layouts</p>
+          <ul><li>Posicional</li><li>Funcional</li><li>Celular</li><li>Por Produto</li></ul>
+        </div>
+        <div>
+          <p style="color:var(--red);font-weight:700;margin-bottom:6px;font-size:13px;">🟥 Gestão</p>
+          <ul><li>Pessoas</li><li>Qualidade</li><li>Capacidade</li><li>Estratégia</li><li>Contratos</li><li>Produtividade</li></ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ CARTAS ══════════════════════════════════════════════════════ -->
+<section id="cartas" class="section">
+  <div class="print-bar">
+    <button class="action-btn" onclick="window.print()">🖨️ Imprimir para recortar</button>
+    <p>Imprima, recorte e plastifique para a melhor experiência!</p>
+  </div>
+
+  <div class="filter-row">
+    <button class="fbtn all active" onclick="filterCards('all',this)">Todas</button>
+    <button class="fbtn azul" onclick="filterCards('azul',this)">🟦 Azul</button>
+    <button class="fbtn verde" onclick="filterCards('verde',this)">🟩 Verde</button>
+    <button class="fbtn amarelo" onclick="filterCards('amarelo',this)">🟨 Amarelo</button>
+    <button class="fbtn vermelho" onclick="filterCards('vermelho',this)">🟥 Vermelho</button>
+    <button class="fbtn sabotagem" onclick="filterCards('sabotagem',this)">💣 Sabotagem</button>
+    <button class="fbtn bonus" onclick="filterCards('bonus',this)">⭐ Bônus</button>
+    <button class="fbtn coringa" onclick="filterCards('coringa',this)">🃏 Coringa</button>
+    <span class="filter-count" id="cardCount">128 cartas</span>
+  </div>
+
+  <div class="cards-grid" id="cardsGrid"></div>
+</section>
+
+<!-- ══ PLACAR ══════════════════════════════════════════════════════ -->
+<section id="pontos" class="section">
+  <div class="score-top">
+    <div>
+      <h2 style="font-family:'Archivo Black',sans-serif;font-size:28px;letter-spacing:-1px;">Placar da Partida</h2>
+      <p style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;">Some as cartas jogadas na fábrica de cada jogador</p>
+    </div>
+    <div class="score-actions">
+      <button class="action-btn" onclick="resetScores()">↺ Resetar</button>
+      <button class="action-btn primary" onclick="calcWinner()">⚙️ Calcular Vencedor</button>
+    </div>
+  </div>
+
+  <div class="winner-box" id="winnerBox">
+    <h2 id="winnerName">🏆 Vencedor!</h2>
+    <p id="winnerPts"></p>
+  </div>
+
+  <div class="players-grid" id="playersGrid"></div>
+</section>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// DATA — all 128 cards exactly as per document
+// ═══════════════════════════════════════════════════════════════════
+
+const CARDS = [
+// ── AZUL · 4Vs DA PRODUÇÃO ─────────────────────────────────────────
+// Normais
+{color:'azul',sub:'normal',name:'Alto Volume',pts:5,emoji:'📦',desc:'Alta escala de produção. Custo unitário reduzido pela padronização.',footer:'4V · VOLUME'},
+{color:'azul',sub:'normal',name:'Baixo Volume',pts:3,emoji:'🔧',desc:'Poucos itens produzidos. Alto valor agregado por unidade.',footer:'4V · VOLUME'},
+{color:'azul',sub:'normal',name:'Alta Variedade',pts:5,emoji:'🎨',desc:'Mix amplo de produtos. Exige flexibilidade e mão de obra qualificada.',footer:'4V · VARIEDADE'},
+{color:'azul',sub:'normal',name:'Baixa Variedade',pts:3,emoji:'➡️',desc:'Produto único ou padronizado. Facilita automação e controle.',footer:'4V · VARIEDADE'},
+{color:'azul',sub:'normal',name:'Demanda Estável',pts:5,emoji:'📊',desc:'Sazonalidade mínima. Planejamento facilitado e capacidade previsível.',footer:'4V · VARIAÇÃO'},
+{color:'azul',sub:'normal',name:'Demanda Sazonal',pts:3,emoji:'📈',desc:'Flutuações ao longo do ano. Exige capacidade flexível.',footer:'4V · VARIAÇÃO'},
+{color:'azul',sub:'normal',name:'Alta Visibilidade',pts:5,emoji:'👁️',desc:'Cliente presente na operação. Alta percepção de qualidade de serviço.',footer:'4V · VISIBILIDADE'},
+{color:'azul',sub:'normal',name:'Baixa Visibilidade',pts:3,emoji:'🏢',desc:'Cliente distante da produção. Foco na eficiência interna.',footer:'4V · VISIBILIDADE'},
+{color:'azul',sub:'normal',name:'Produção Padronizada',pts:5,emoji:'🏎️',desc:'Processos repetitivos e estáveis. Ideal para automação e linha.',footer:'4V · VOLUME'},
+{color:'azul',sub:'normal',name:'Produção Personalizada',pts:5,emoji:'✍️',desc:'Cada item único. Resposta direta à especificação do cliente.',footer:'4V · VARIEDADE'},
+{color:'azul',sub:'normal',name:'Escala Eficiente',pts:5,emoji:'⚡',desc:'Volume alto com custo controlado. Vantagem competitiva de escala.',footer:'4V · VOLUME'},
+{color:'azul',sub:'normal',name:'Mix Complexo',pts:4,emoji:'🔀',desc:'Portfólio amplo exige roteiro flexível e setup frequente.',footer:'4V · VARIEDADE'},
+{color:'azul',sub:'normal',name:'Fila Reduzida',pts:4,emoji:'⏱️',desc:'Tempo de espera minimizado. Operação fluida e clientes satisfeitos.',footer:'4V · VISIBILIDADE'},
+{color:'azul',sub:'normal',name:'Atendimento Direto',pts:4,emoji:'🤝',desc:'Contato direto com cliente durante a entrega do serviço.',footer:'4V · VISIBILIDADE'},
+{color:'azul',sub:'normal',name:'Produção Sob Encomenda',pts:5,emoji:'📋',desc:'Make-to-order. Produz apenas quando o pedido é confirmado.',footer:'4V · VARIAÇÃO'},
+{color:'azul',sub:'normal',name:'Fluxo Previsível',pts:4,emoji:'🎯',desc:'Variação da demanda baixa. Eficiência e previsibilidade máximas.',footer:'4V · VARIAÇÃO'},
+// Bônus
+{color:'azul',sub:'bonus',name:'Sinergia dos 4Vs',pts:10,emoji:'💎',desc:'Sua fábrica domina os quatro vetores da produção. Vantagem absoluta.',footer:'BÔNUS ESPECIAL'},
+{color:'azul',sub:'bonus',name:'Estratégia Balanceada',pts:10,emoji:'⚖️',desc:'Equilíbrio perfeito entre volume, variedade, variação e visibilidade.',footer:'BÔNUS ESPECIAL'},
+{color:'azul',sub:'bonus',name:'Operação Flexível',pts:10,emoji:'🌊',desc:'Sua operação se adapta a qualquer cenário. Resiliência total.',footer:'BÔNUS ESPECIAL'},
+// Coringas
+{color:'azul',sub:'coringa',name:'Ajuste de Demanda',pts:0,emoji:'🎛️',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+{color:'azul',sub:'coringa',name:'Reengenharia Instantânea',pts:0,emoji:'🔁',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+// Sabotagens
+{color:'azul',sub:'sabotagem',name:'Pico de Demanda',pts:-5,emoji:'💥',desc:'Adversário não aguenta a demanda. Perde 5 pontos por incapacidade.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Queda Brusca de Pedidos',pts:-5,emoji:'📉',desc:'Mercado esfria. Adversário perde 5 pontos por ociosidade.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Excesso de Variedade',pts:-5,emoji:'🌀',desc:'Complexidade incontrolável. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Cliente Exigente',pts:-5,emoji:'😤',desc:'Especificações impossíveis. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Gargalo Operacional',pts:-5,emoji:'🔴',desc:'Restrição crítica trava a produção. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Falta de Previsão',pts:-5,emoji:'🎲',desc:'Planejamento falhou. Remove 1 carta comum da fábrica adversária.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Oscilação de Mercado',pts:-5,emoji:'🌪️',desc:'Mercado volátil afeta toda a operação. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Atendimento Lotado',pts:-5,emoji:'😱',desc:'Filas e reclamações. Adversário perde 5 pontos por excesso.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Retrabalho em Massa',pts:-5,emoji:'🔄',desc:'Defeitos em série. Adversário perde 5 pontos por desperdício.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Mix Confuso',pts:-5,emoji:'❓',desc:'Portfólio sem sentido. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+{color:'azul',sub:'sabotagem',name:'Planejamento Fraco',pts:-5,emoji:'🗑️',desc:'Estratégia inconsistente. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+
+// ── VERDE · TIPOS DE PROCESSO ──────────────────────────────────────
+// Normais
+{color:'verde',sub:'normal',name:'Projeto Exclusivo',pts:7,emoji:'🏗️',desc:'Produto único e complexo. Todos os recursos mobilizados ao redor.',footer:'PROCESSO · PROJETO'},
+{color:'verde',sub:'normal',name:'Jobbing Artesanal',pts:5,emoji:'🔩',desc:'Trabalhos individualizados. Alta habilidade, baixo volume por ciclo.',footer:'PROCESSO · JOBBING'},
+{color:'verde',sub:'normal',name:'Produção em Lotes',pts:5,emoji:'🎛️',desc:'Grupos de produtos similares processados em sequência de operações.',footer:'PROCESSO · LOTES'},
+{color:'verde',sub:'normal',name:'Produção em Massa',pts:5,emoji:'🏭',desc:'Alto volume, baixa variedade. Linha dedicada, custo unitário mínimo.',footer:'PROCESSO · MASSA'},
+{color:'verde',sub:'normal',name:'Processo Contínuo',pts:7,emoji:'⚡',desc:'Fluxo ininterrupto. Altamente automatizado. Opera 24h por dia.',footer:'PROCESSO · CONTÍNUO'},
+{color:'verde',sub:'normal',name:'Serviço Profissional',pts:5,emoji:'👔',desc:'Baixo volume, alta customização. Solução personalizada para cada cliente.',footer:'PROCESSO · SERVIÇOS'},
+{color:'verde',sub:'normal',name:'Serviço em Massa',pts:5,emoji:'🏬',desc:'Alto volume, baixo contato. Eficiência por padronização de atendimento.',footer:'PROCESSO · SERVIÇOS'},
+{color:'verde',sub:'normal',name:'Serviço Personalizado',pts:5,emoji:'🎀',desc:'Serviço único para cada cliente. Flexibilidade e alto contato.',footer:'PROCESSO · SERVIÇOS'},
+{color:'verde',sub:'normal',name:'Linha Automatizada',pts:5,emoji:'🤖',desc:'Robôs e sistemas integrados. Velocidade máxima com mínimo erro humano.',footer:'PROCESSO · MASSA'},
+{color:'verde',sub:'normal',name:'Produção Sob Medida',pts:5,emoji:'📐',desc:'Especificação do cliente determina todo o roteiro de produção.',footer:'PROCESSO · JOBBING'},
+{color:'verde',sub:'normal',name:'Oficina Especializada',pts:4,emoji:'🛠️',desc:'Agrupamento por função. Flexível, com setores específicos por tipo.',footer:'PROCESSO · JOBBING'},
+{color:'verde',sub:'normal',name:'Produção Modular',pts:4,emoji:'🧩',desc:'Módulos padronizados combinados de formas diferentes por pedido.',footer:'PROCESSO · LOTES'},
+{color:'verde',sub:'normal',name:'Manufatura Enxuta',pts:5,emoji:'♻️',desc:'Elimina desperdícios. Pull system — produz apenas o que a demanda puxa.',footer:'PROCESSO · LEAN'},
+{color:'verde',sub:'normal',name:'Operação Repetitiva',pts:4,emoji:'🔃',desc:'Ciclos curtos e padronizados. Aprendizado contínuo, eficiência crescente.',footer:'PROCESSO · MASSA'},
+{color:'verde',sub:'normal',name:'Alta Eficiência',pts:5,emoji:'🚀',desc:'Recursos otimizados. OEE elevado, desperdício mínimo na operação.',footer:'PROCESSO · GERAL'},
+{color:'verde',sub:'normal',name:'Setup Rápido',pts:4,emoji:'⏩',desc:'SMED aplicado. Troca rápida de ferramentas entre lotes distintos.',footer:'PROCESSO · LOTES'},
+// Bônus
+{color:'verde',sub:'bonus',name:'Contrato Industrial',pts:10,emoji:'📜',desc:'Grande contrato fechado. Capacidade produtiva comprometida positivamente.',footer:'BÔNUS ESPECIAL'},
+{color:'verde',sub:'bonus',name:'Escala Internacional',pts:10,emoji:'🌍',desc:'Exportação confirmada. Volume e receita em outro patamar.',footer:'BÔNUS ESPECIAL'},
+{color:'verde',sub:'bonus',name:'Turno Extra Produtivo',pts:10,emoji:'🌙',desc:'Terceiro turno aprovado. Capacidade máxima atingida.',footer:'BÔNUS ESPECIAL'},
+// Coringas
+{color:'verde',sub:'coringa',name:'Troca de Processo',pts:0,emoji:'🔁',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+{color:'verde',sub:'coringa',name:'Adaptação Total',pts:0,emoji:'🌊',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+// Sabotagens
+{color:'verde',sub:'sabotagem',name:'Máquina Quebrada',pts:-5,emoji:'💥',desc:'Equipamento crítico falhou. Adversário perde 5 pontos por parada.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Setup Demorado',pts:-5,emoji:'🐌',desc:'Troca de ferramentas demora horas. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Falta de Matéria-Prima',pts:-5,emoji:'📭',desc:'Estoque zerado. Remove 1 carta comum da fábrica do adversário.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Atraso no Lote',pts:-5,emoji:'⏳',desc:'Pedido atrasado. Cliente insatisfeito. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Erro Operacional',pts:-5,emoji:'❌',desc:'Falha humana compromete o lote. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Parada Técnica',pts:-5,emoji:'🛑',desc:'Manutenção não planejada. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Pedido Cancelado',pts:-5,emoji:'🚫',desc:'Cliente cancela pedido de última hora. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Manutenção Emergencial',pts:-5,emoji:'🔴',desc:'Falha grave exige parada total. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Baixa Produtividade',pts:-5,emoji:'😴',desc:'OEE despencou. Adversário perde 5 pontos por ineficiência.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Acúmulo de Estoque',pts:-5,emoji:'📦',desc:'Giro baixo, custo alto. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'verde',sub:'sabotagem',name:'Capacidade Insuficiente',pts:-5,emoji:'📉',desc:'Demanda maior que capacidade. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+
+// ── AMARELO · LAYOUTS ──────────────────────────────────────────────
+// Normais
+{color:'amarelo',sub:'normal',name:'Layout Posicional',pts:7,emoji:'📍',desc:'Produto fixo, recursos movem-se até ele. Ideal para grandes projetos.',footer:'LAYOUT · POSICIONAL'},
+{color:'amarelo',sub:'normal',name:'Layout Funcional',pts:5,emoji:'🗂️',desc:'Agrupamento por função. Flexível, com maior movimentação entre setores.',footer:'LAYOUT · FUNCIONAL'},
+{color:'amarelo',sub:'normal',name:'Layout Celular',pts:5,emoji:'🔬',desc:'Células autônomas por família de produto. Eficiência e qualidade elevadas.',footer:'LAYOUT · CELULAR'},
+{color:'amarelo',sub:'normal',name:'Layout por Produto',pts:5,emoji:'➡️',desc:'Linha dedicada e sequenciada. Máxima eficiência de fluxo produtivo.',footer:'LAYOUT · PRODUTO'},
+{color:'amarelo',sub:'normal',name:'Fluxo Linear',pts:4,emoji:'📏',desc:'Sequência direta do início ao fim. Fluxo sem retornos ou cruzamentos.',footer:'LAYOUT · PRODUTO'},
+{color:'amarelo',sub:'normal',name:'Setores Integrados',pts:4,emoji:'🔗',desc:'Departamentos bem conectados. Comunicação e transferência facilitadas.',footer:'LAYOUT · FUNCIONAL'},
+{color:'amarelo',sub:'normal',name:'Movimentação Reduzida',pts:5,emoji:'🛤️',desc:'Distâncias mínimas entre operações. Menos desperdício de transporte.',footer:'LAYOUT · CELULAR'},
+{color:'amarelo',sub:'normal',name:'Espaço Inteligente',pts:4,emoji:'📐',desc:'Aproveitamento máximo da área disponível. Planta otimizada.',footer:'LAYOUT · GERAL'},
+{color:'amarelo',sub:'normal',name:'Célula Ágil',pts:5,emoji:'⚡',desc:'Célula de manufatura rápida e flexível. Responde à demanda do cliente.',footer:'LAYOUT · CELULAR'},
+{color:'amarelo',sub:'normal',name:'Produção Organizada',pts:4,emoji:'🗃️',desc:'5S aplicado. Ambiente limpo, seguro e organizado para máxima eficiência.',footer:'LAYOUT · GERAL'},
+{color:'amarelo',sub:'normal',name:'Área Expandida',pts:4,emoji:'🏟️',desc:'Novo galpão ou expansão da planta. Capacidade instalada ampliada.',footer:'LAYOUT · GERAL'},
+{color:'amarelo',sub:'normal',name:'Setor Especializado',pts:4,emoji:'🎯',desc:'Área dedicada a família de produtos ou serviços. Alta especialização.',footer:'LAYOUT · FUNCIONAL'},
+{color:'amarelo',sub:'normal',name:'Linha Balanceada',pts:5,emoji:'⚖️',desc:'Capacidade equilibrada entre estações. Sem gargalos, ritmo uniforme.',footer:'LAYOUT · PRODUTO'},
+{color:'amarelo',sub:'normal',name:'Separação Eficiente',pts:4,emoji:'🚧',desc:'Fluxos separados por tipo de produto ou cliente. Sem interferências.',footer:'LAYOUT · FUNCIONAL'},
+{color:'amarelo',sub:'normal',name:'Rotas Curtas',pts:4,emoji:'🗺️',desc:'Percursos mínimos dentro da fábrica. Transporte interno reduzido.',footer:'LAYOUT · CELULAR'},
+{color:'amarelo',sub:'normal',name:'Ambiente Otimizado',pts:5,emoji:'✨',desc:'Ergonomia, iluminação e ventilação adequadas. Produtividade elevada.',footer:'LAYOUT · GERAL'},
+// Bônus
+{color:'amarelo',sub:'bonus',name:'Reforma Perfeita',pts:10,emoji:'🏗️',desc:'Reforma completa da planta com layout ótimo. Resultado excepcional.',footer:'BÔNUS ESPECIAL'},
+{color:'amarelo',sub:'bonus',name:'Expansão da Planta',pts:10,emoji:'🌐',desc:'Nova unidade inaugurada. Capacidade e alcance duplicados.',footer:'BÔNUS ESPECIAL'},
+{color:'amarelo',sub:'bonus',name:'Layout Premium',pts:10,emoji:'💎',desc:'Projeto de layout premiado. Referência do setor.',footer:'BÔNUS ESPECIAL'},
+// Coringas
+{color:'amarelo',sub:'coringa',name:'Mudança Instantânea',pts:0,emoji:'🔀',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+{color:'amarelo',sub:'coringa',name:'Engenharia Criativa',pts:0,emoji:'💡',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+// Sabotagens
+{color:'amarelo',sub:'sabotagem',name:'Fluxo Cruzado',pts:-5,emoji:'❌',desc:'Caminhos se cruzam e causam congestionamento. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Espaço Mal Utilizado',pts:-5,emoji:'🗑️',desc:'Planta ineficiente. Adversário perde 5 pontos por desperdício de área.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Colisão de Setores',pts:-5,emoji:'💢',desc:'Setores incompatíveis colocados lado a lado. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Transporte Excessivo',pts:-5,emoji:'🚛',desc:'Material percorre km dentro da fábrica. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Layout Confuso',pts:-5,emoji:'🌀',desc:'Operadores perdidos na planta. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Gargalo Físico',pts:-5,emoji:'🔴',desc:'Ponto de estrangulamento no fluxo. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Distância Longa',pts:-5,emoji:'📏',desc:'Operações distantes entre si. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Estoque no Corredor',pts:-5,emoji:'📦',desc:'Material bloqueando passagens. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Linha Travada',pts:-5,emoji:'🛑',desc:'Produção parada por problema de layout. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Área Improdutiva',pts:-5,emoji:'🏚️',desc:'Espaço desperdiçado. Adversário perde 5 pontos por ineficiência.',footer:'SABOTAGEM'},
+{color:'amarelo',sub:'sabotagem',name:'Setor Isolado',pts:-5,emoji:'🏝️',desc:'Departamento desconectado. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+
+// ── VERMELHO · GESTÃO DA OPERAÇÃO ─────────────────────────────────
+// Normais
+{color:'vermelho',sub:'normal',name:'Funcionário Destaque',pts:5,emoji:'🌟',desc:'Talento raro identificado e reconhecido. Produtividade da equipe sobe.',footer:'GESTÃO · PESSOAS'},
+{color:'vermelho',sub:'normal',name:'Meta Batida',pts:5,emoji:'🎯',desc:'KPIs alcançados acima da meta. Time celebra e avança com confiança.',footer:'GESTÃO · RESULTADO'},
+{color:'vermelho',sub:'normal',name:'Novo Contrato',pts:7,emoji:'📝',desc:'Acordo comercial assinado. Receita garantida para os próximos meses.',footer:'GESTÃO · CONTRATO'},
+{color:'vermelho',sub:'normal',name:'Cliente Fiel',pts:5,emoji:'❤️',desc:'Cliente recorrente de longa data. Receita estável e custo de aquisição zero.',footer:'GESTÃO · ESTRATÉGIA'},
+{color:'vermelho',sub:'normal',name:'Liderança Forte',pts:5,emoji:'👑',desc:'Gestor inspirador à frente da operação. Engajamento e foco garantidos.',footer:'GESTÃO · PESSOAS'},
+{color:'vermelho',sub:'normal',name:'Treinamento Eficiente',pts:5,emoji:'🎓',desc:'Capacitação aplicada e resultados visíveis. Equipe mais produtiva.',footer:'GESTÃO · PESSOAS'},
+{color:'vermelho',sub:'normal',name:'Controle de Qualidade',pts:5,emoji:'✅',desc:'ISO implantada. Defeitos zerados. Cliente confia na entrega.',footer:'GESTÃO · QUALIDADE'},
+{color:'vermelho',sub:'normal',name:'Kaizen Aplicado',pts:5,emoji:'♻️',desc:'Melhoria contínua em ação. Pequenas mudanças, grande impacto.',footer:'GESTÃO · QUALIDADE'},
+{color:'vermelho',sub:'normal',name:'Auditoria Aprovada',pts:5,emoji:'🏅',desc:'Auditores saem satisfeitos. Certificação renovada com louvor.',footer:'GESTÃO · QUALIDADE'},
+{color:'vermelho',sub:'normal',name:'Equipe Motivada',pts:5,emoji:'💪',desc:'Time engajado e focado. Absenteísmo zero, produtividade máxima.',footer:'GESTÃO · PESSOAS'},
+{color:'vermelho',sub:'normal',name:'Redução de Custos',pts:5,emoji:'💰',desc:'Iniciativa de corte de gastos bem-sucedida. Margem aumentada.',footer:'GESTÃO · RESULTADO'},
+{color:'vermelho',sub:'normal',name:'Bônus por Resultado',pts:5,emoji:'🎁',desc:'Programa de incentivos impulsiona desempenho de toda a equipe.',footer:'GESTÃO · PESSOAS'},
+{color:'vermelho',sub:'normal',name:'Marketing Forte',pts:4,emoji:'📣',desc:'Campanha de sucesso. Demanda aquecida, pipeline cheio.',footer:'GESTÃO · ESTRATÉGIA'},
+{color:'vermelho',sub:'normal',name:'Expansão Comercial',pts:5,emoji:'🌐',desc:'Novos mercados abertos. Faturamento e carteira crescem juntos.',footer:'GESTÃO · ESTRATÉGIA'},
+{color:'vermelho',sub:'normal',name:'Gestão Visual',pts:4,emoji:'📊',desc:'Dashboards e Kanban expostos. Time alinhado sem reunião desnecessária.',footer:'GESTÃO · QUALIDADE'},
+{color:'vermelho',sub:'normal',name:'Processo Seguro',pts:5,emoji:'🦺',desc:'PPRA e EPI em ordem. Zero acidentes, compliance total.',footer:'GESTÃO · QUALIDADE'},
+// Bônus
+{color:'vermelho',sub:'bonus',name:'Investidor Surpresa',pts:10,emoji:'💼',desc:'Aporte inesperado. Capital para expandir e investir sem restrição.',footer:'BÔNUS ESPECIAL'},
+{color:'vermelho',sub:'bonus',name:'Contrato Milionário',pts:10,emoji:'🤑',desc:'Deal do ano fechado. Fábrica dos sonhos agora é realidade.',footer:'BÔNUS ESPECIAL'},
+{color:'vermelho',sub:'bonus',name:'Empresa do Ano',pts:10,emoji:'🏆',desc:'Prêmio máximo do setor. Referência de gestão e operação de excelência.',footer:'BÔNUS ESPECIAL'},
+// Coringas
+{color:'vermelho',sub:'coringa',name:'Consultoria Especialista',pts:0,emoji:'🧠',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+{color:'vermelho',sub:'coringa',name:'CEO Visionário',pts:0,emoji:'🔭',desc:'Copie qualquer carta da mesa, cancele sabotagem ou dobre uma carta sua.',footer:'CORINGA'},
+// Sabotagens
+{color:'vermelho',sub:'sabotagem',name:'Greve Interna',pts:-5,emoji:'✊',desc:'Trabalhadores cruzam os braços. Bloqueia próximo turno do adversário.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Demissão em Massa',pts:-5,emoji:'📤',desc:'Turnover em espiral. Remove 1 carta comum da fábrica do adversário.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Auditoria Reprovada',pts:-5,emoji:'🚨',desc:'Irregularidades encontradas. Adversário perde 5 pontos imediatamente.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Reclamação Viral',pts:-5,emoji:'📱',desc:'Vídeo no TikTok arrasa a reputação. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Processo Trabalhista',pts:-5,emoji:'⚖️',desc:'Ação na Justiça do Trabalho. Adversário perde 5 pontos em multas.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Erro de Gestão',pts:-5,emoji:'🤦',desc:'Decisão errada no topo. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Turnover Alto',pts:-5,emoji:'🔄',desc:'Giro de pessoal caro e desgastante. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Meta Perdida',pts:-5,emoji:'❌',desc:'KPIs no vermelho. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Cliente Cancelou',pts:-5,emoji:'💔',desc:'Contrato rescindido. Adversário perde 5 pontos de receita.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Multa Reguladora',pts:-5,emoji:'💸',desc:'Órgão regulador aplica sanção. Adversário perde 5 pontos.',footer:'SABOTAGEM'},
+{color:'vermelho',sub:'sabotagem',name:'Equipe Desmotivada',pts:-5,emoji:'😞',desc:'Clima organizacional péssimo. Remove 1 carta do adversário.',footer:'SABOTAGEM'},
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER CARDS
+// ═══════════════════════════════════════════════════════════════════
+const EMOJIS_COLOR = {azul:'🟦',verde:'🟩',amarelo:'🟨',vermelho:'🟥',coringa:'🃏'};
+const SUB_LABELS = {normal:'',bonus:'BÔNUS',coringa:'CORINGA',sabotagem:'SABOTAGEM'};
+const CORNER = {azul:'4V',verde:'P',amarelo:'L',vermelho:'G'};
+
+function ptsLabel(c){
+  if(c.sub==='coringa') return '★';
+  if(c.pts>0) return '+'+c.pts;
+  return c.pts;
+}
+
+function renderCards(){
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML='';
+  let count=0;
+  CARDS.forEach((c,i)=>{
+    const classes = ['gcard', c.color, c.sub].join(' ');
+    const d = document.createElement('div');
+    d.className=classes;
+    d.dataset.color=c.color;
+    d.dataset.sub=c.sub;
+    const corner = c.color==='coringa'?'🃏':(CORNER[c.color]||'?');
+    d.innerHTML=`
+      <span class="card-corner-tl">${corner}</span>
+      <span class="card-corner-br">${corner}</span>
+      <div class="card-face">
+        <div class="card-top">
+          <span class="card-color-tag">${c.footer}</span>
+          <span class="card-pts-badge">${ptsLabel(c)}</span>
+        </div>
+        <div class="card-emoji">${c.emoji}</div>
+        <hr class="card-divider">
+        <div class="card-name">${c.name}</div>
+        <div class="card-subtype">${SUB_LABELS[c.sub]||c.sub.toUpperCase()}</div>
+        <div class="card-desc">${c.desc}</div>
+        <div class="card-footer"><span class="card-footer-text">Factory of Dreams</span></div>
+      </div>`;
+    grid.appendChild(d);
+    count++;
+  });
+  document.getElementById('cardCount').textContent = count+' cartas';
+}
+
+function filterCards(type, btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  let count=0;
+  document.querySelectorAll('.gcard').forEach(card=>{
+    let show=false;
+    if(type==='all') show=true;
+    else if(type==='sabotagem') show=card.dataset.sub==='sabotagem';
+    else if(type==='bonus') show=card.dataset.sub==='bonus';
+    else if(type==='coringa') show=card.dataset.sub==='coringa';
+    else show=card.dataset.color===type && card.dataset.sub==='normal';
+    card.classList.toggle('hidden',!show);
+    if(show)count++;
+  });
+  document.getElementById('cardCount').textContent=count+' cartas';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SCORE
+// ═══════════════════════════════════════════════════════════════════
+const CATS=[
+  {key:'azul',label:'🟦 Cartas Azuis',color:'var(--blue)'},
+  {key:'verde',label:'🟩 Cartas Verdes',color:'var(--green)'},
+  {key:'amarelo',label:'🟨 Cartas Amarelas',color:'var(--yellow)'},
+  {key:'vermelho',label:'🟥 Cartas Vermelhas',color:'var(--red)'},
+  {key:'bonus',label:'⭐ Bônus (+10 cada)',color:'#7c3aed'},
+  {key:'sabotagem',label:'💣 Sabotagens sofridas (−5)',color:'#ef4444'},
+];
+const PTS_PER={azul:4,verde:5,amarelo:4,vermelho:4,bonus:10,sabotagem:-5};
+// (approximated: common ~3-5, average ~4 per card; bonus = +10; sabotagem = -5)
+
+const scores={};
+for(let p=1;p<=6;p++){scores[p]={};CATS.forEach(c=>{scores[p][c.key]=0;});}
+
+function renderPlayers(){
+  const grid=document.getElementById('playersGrid');
+  grid.innerHTML='';
+  for(let p=1;p<=6;p++){
+    const b=document.createElement('div');
+    b.className='pboard';
+    const rows=CATS.map(cat=>`
+      <div class="score-cat">
+        <span class="score-cat-label">${cat.label}</span>
+        <div class="score-ctrl">
+          <button class="sbtn" onclick="chg(${p},'${cat.key}',-1)">−</button>
+          <span class="sval" id="v${p}_${cat.key}">0</span>
+          <button class="sbtn" onclick="chg(${p},'${cat.key}',1)">+</button>
+        </div>
+      </div>`).join('');
+    b.innerHTML=`
+      <input class="pname-input" id="pn${p}" placeholder="Jogador ${p}" value="Jogador ${p}">
+      ${rows}
+      <div class="ptotal"><small>TOTAL</small><span id="pt${p}">0</span> <small style="font-size:14px">pts</small></div>`;
+    grid.appendChild(b);
+  }
+}
+
+function chg(p,cat,d){
+  scores[p][cat]=Math.max(0,(scores[p][cat]||0)+d);
+  document.getElementById(`v${p}_${cat}`).textContent=scores[p][cat];
+  upTotal(p);
+}
+function upTotal(p){
+  let t=0;
+  CATS.forEach(c=>{ t+=scores[p][c.key]*PTS_PER[c.key]; });
+  document.getElementById(`pt${p}`).textContent=t;
+}
+function resetScores(){
+  for(let p=1;p<=6;p++){
+    CATS.forEach(c=>{scores[p][c.key]=0;document.getElementById(`v${p}_${c.key}`).textContent=0;});
+    document.getElementById(`pt${p}`).textContent=0;
+  }
+  document.getElementById('winnerBox').classList.remove('show');
+}
+function calcWinner(){
+  let best=-Infinity,winner='',pts=0;
+  for(let p=1;p<=6;p++){
+    const n=document.getElementById(`pn${p}`).value||`Jogador ${p}`;
+    const t=parseInt(document.getElementById(`pt${p}`).textContent)||0;
+    if(t>best){best=t;winner=n;pts=t;}
+  }
+  const box=document.getElementById('winnerBox');
+  document.getElementById('winnerName').textContent=`🏆 ${winner} venceu!`;
+  document.getElementById('winnerPts').textContent=`${pts} pontos · Fábrica dos Sonhos conquistada`;
+  box.classList.add('show');
+  box.scrollIntoView({behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════════════════
+function showSection(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('visible'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('visible');
+  btn.classList.add('active');
+}
+
+// INIT
+renderCards();
+renderPlayers();
+</script>
+</body>
+</html>
